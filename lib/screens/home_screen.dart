@@ -15,12 +15,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  // final List<Widget> _pages = [
-  //   const RentStatusScreen(),
-  //   const SubmitRequestScreen(),
-  //   const MaintenanceHistoryScreen(),
-  //   const ProfileScreen(),
-  // ];
+  final List<Widget> _pages = [
+    const RentStatusScreen(),
+    // const SubmitRequestScreen(),
+    // const MaintenanceHistoryScreen(),
+    // const ProfileScreen(),
+  ];
 
   final List<String> _titles = [
     'Rent Status',
@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: AppColors.background,
         automaticallyImplyLeading: false,
       ),
-      // body: _pages[_selectedIndex],
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: AppColors.primary,
