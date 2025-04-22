@@ -39,7 +39,45 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# Android Studio build artifacts
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/
+
+# iOS build artifacts
+/ios/Flutter/Flutter.podspec
+/ios/Pods/
+/ios/Podfile.lock
+/ios/.symlinks/
+
+# macOS build artifacts
+/macos/Flutter/Flutter.podspec
+/macos/Pods/
+/macos/Podfile.lock
+/macos/.symlinks/
+
+# Linux build artifacts
+/linux/Flutter/Flutter.podspec
+/linux/Pods/
+/linux/Podfile.lock
+/linux/.symlinks/
+
+# Windows build artifacts
+/windows/Flutter/Flutter.podspec
+/windows/Pods/
+/windows/Podfile.lock
+/windows/.symlinks/
+
+# Flutter build artifacts (APK, AAB, IPA)
+*.apk
+*.aab
+*.ipa
+*.app
+
+# Optional: IDE-specific files for VS Code
+.vscode/
+
+# Misc files that should be ignored
+*.bak
+*.swo
