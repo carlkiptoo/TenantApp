@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tenant_app/screens/update_contact_screen.dart';
 import 'package:tenant_app/theme/app_colors.dart';
 import 'rent_status_screen.dart';
 import 'maintenance_form_screen.dart';
@@ -17,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _pages = [
     const RentStatusScreen(),
-    // const SubmitRequestScreen(),
+    const MaintenanceRequestScreen(),
     // const MaintenanceHistoryScreen(),
     // const ProfileScreen(),
   ];
