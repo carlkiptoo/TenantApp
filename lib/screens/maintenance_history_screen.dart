@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'request_detail_screen.dart';
 
 class MaintenanceHistoryScreen extends StatefulWidget {
   const MaintenanceHistoryScreen({super.key});
@@ -57,7 +58,10 @@ class _MaintenanceHistoryScreenState extends State<MaintenanceHistoryScreen> {
                     elevation: 2,
                     child: ListTile(
                       onTap: () {
-                        //Navigate to details screen
+                       Navigator.push(context,
+                         MaterialPageRoute(builder: (context) => RequestDetailScreen(request: request),
+                         ),
+                       );
                       },
                       leading: CircleAvatar(
                         backgroundColor: getStatusColor(request['status']),

@@ -19,14 +19,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     const RentStatusScreen(),
     const MaintenanceRequestScreen(),
-    // const MaintenanceHistoryScreen(),
+    const MaintenanceHistoryScreen(),
     // const ProfileScreen(),
   ];
 
   final List<String> _titles = [
     'Rent Status',
     'Submit Request',
-    'Maintenance History',
+    'History',
     'Profile',
   ];
 
