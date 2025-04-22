@@ -29,9 +29,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = true;
       });
 
-      // Navigator.pushReplacement(context,
-      // MaterialPageRoute(builder: (_) => const HomeScreen()),
-      // );
+      Navigator.pushReplacement(context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
     } else {
 
     ScaffoldMessenger.of(context,
@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: AppColors.accent,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     child: _isLoading ? const CircularProgressIndicator(color: Colors.white,) : const Text('Login'),
