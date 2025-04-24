@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../theme/app_colors.dart';
 import 'home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,43 +25,55 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   Future<void> _login() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', true);
-
+    
+    if (!_formKey.currentState!.validate()) return;
+    
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email == tenantEmail && password == password) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isLoggedIn', true);
-
-      Navigator.pushReplacement(context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final response = await http.post(Uri.parse('http://192.168.100.6:5000/api/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
       );
-    } else {
 
-    ScaffoldMessenger.of(context,
-    ).showSnackBar(const SnackBar(content: Text('Invalid credentials')));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('token', data['token']);
+        // await prefs.setString('tenantName', data['tenant']['name']);
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen()
+          ),
+        );
+      } else {
+        final error = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${error}')),
+        );
+      }
+    } catch (e) {
+      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Something went wrong. Please try again later: ${e}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+        });
+      }
     }
-    // if (_formKey.currentState!.validate()) {
-    //   setState(() {
-    //     _isLoading = true;
-    //   });
-    //
-    //   Future.delayed(const Duration(seconds: 3), () {
-    //     setState(() {
-    //       _isLoading = false;
-    //
-    //       // Navigator.pushReplacement(context,
-    //       //  MaterialPageRoute(builder: (_) => const HomeScreen()),
-    //       // );
-    //     });
-    //   });
-    // }
   }
 
   @override

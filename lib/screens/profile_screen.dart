@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,6 +17,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController phoneController = TextEditingController(text: '0745678987');
   final TextEditingController emailController = TextEditingController(text: 'tenant@tenant.com');
 
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLoggedIn');
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+          builder: (_) => const LoginScreen()),
+          (route) => false,
+    );
+
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,6 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ElevatedButton.icon(
               onPressed: () {
                 //LOg out logic
+                _logout();
                 Navigator.pushReplacement(context, '/login' as Route<Object?>);
               },
               icon: const Icon(Icons.logout),
