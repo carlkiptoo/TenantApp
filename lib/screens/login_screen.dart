@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../theme/app_colors.dart';
 import 'home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'rent_status_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,10 +44,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print(data);
 
-        final prefs = await SharedPreferences.getInstance();
+        final tenantId = data['tenantId'];
+        print(tenantId);
+        if (tenantId == null ) {
+          throw Exception('Tenant missing from server response');
+        }
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
         await prefs.setString('token', data['token']);
+        await prefs.setString('tenantId', tenantId);
         // await prefs.setString('tenantName', data['tenant']['name']);
 
         if (!mounted) return;
