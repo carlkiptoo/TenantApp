@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,7 @@ class RentStatusScreen extends StatefulWidget {
 
 class _RentStatusScreenState extends State<RentStatusScreen> {
   late Future<Map<String, dynamic>> _rentStatusFuture;
+  String selectedFilter = 'All';
 
   static const int garbageFee = 200;
   static const int otherCharges = 0;
@@ -32,23 +34,37 @@ class _RentStatusScreenState extends State<RentStatusScreen> {
   }
 
   Future<Map<String, dynamic>> fetchRentStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final tenantId = prefs.getString('tenantId');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tenantId = prefs.getString('tenantId');
 
-    if (tenantId == null) {
-      throw Exception('Tenant ID not found. Please login again');
+      if (tenantId == null) {
+        throw Exception('Tenant ID not found. Please login again');
+      }
+
+      final response = await http.get(
+        Uri.parse(
+            'http://192.168.100.6:5000/api/rent/rent-status?tenantId=$tenantId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to load rent status: ${response.statusCode}');
+      }
+    } catch (error) {
+      print(error);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Something went wrong. Please ry again later: $error')),
+      );
+      return {};
     }
+  }
 
-    final response = await http.get(
-      Uri.parse('http://192.168.100.6:5000/api/rent/rent-status?tenantId=$tenantId'),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load rent status: ${response.statusCode}');
-    }
+  List<Map<String, dynamic>> filterRentHistory(List<dynamic> history) {
+    if (selectedFilter == 'All') return history.cast<Map<String, dynamic>>();
+    return history.where((entry) => entry['status']?.toLowerCase() == selectedFilter.toLowerCase()).cast<Map<String, dynamic>>().toList();
   }
 
   @override
@@ -150,7 +166,22 @@ class _RentStatusScreenState extends State<RentStatusScreen> {
 
                   const Text('Payment History',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  CupertinoSegmentedControl<String>(
+                    groupValue: selectedFilter,
+                    onValueChanged: (value) {
+                      setState(() {
+                        selectedFilter = value;
+                      });
+                    },
+                    children: const {
+                      'All': Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('All')),
+                      'Paid': Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('Paid')),
+                      'Unpaid': Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('Unpaid')),
+                    },
+                  ),
                   const SizedBox(height: 20),
+
                   ...rentStatus.map((entry) {
                     const garbageFee = 200;
                     const otherCharges = 0;

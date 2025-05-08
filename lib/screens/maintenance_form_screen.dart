@@ -2,6 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path/path.dart' as path;
+
 
 class MaintenanceRequestScreen extends StatefulWidget {
   const MaintenanceRequestScreen({super.key});
@@ -16,13 +20,7 @@ class _MaintenanceScreenState extends State<MaintenanceRequestScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
 
-  String priority = 'Medium';
   File? _imageFile;
-
-  //Simulated apt info
-  final String unitNumber = 'A3';
-  final String tenantName = 'Carl Kirui';
-  final String description = '';
 
   double _priorityValue = 0;
 
@@ -66,27 +64,104 @@ class _MaintenanceScreenState extends State<MaintenanceRequestScreen> {
     }
   }
 
-  void _submitRequest() {
-    if (_formKey.currentState!.validate()) {
-      final requestData = {
-        'unitNumber': unitNumber,
-        'tenantName': tenantName,
-        'description': description,
-        'priority': priority,
-        'preferredDate': _dateController.text,
-        'imagePath': _imageFile?.path,
-        'status': 'Pending',
-        'dateReported': DateTime.now().toIso8601String(),
-      };
+  Future<void> _submitRequest() async {
+    debugPrint('🚀 _submitRequest called');
 
-      print('Submitted Request: $requestData');
+    if (!_formKey.currentState!.validate()) return;
 
+    debugPrint('Form is valid');
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final tenantId = prefs.getString('tenantId');
+
+    if (token == null || tenantId == null) {
+      debugPrint('Token or tenant Id is missing');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maintenance request submitted')),
+        SnackBar(content: Text('You must be logged in to submit a request'))
       );
-
-      Navigator.pop(context);
+      return;
     }
+
+    try {
+      final uri = Uri.parse('http://192.168.100.6:5000/api/maintenance/maintenance-requests');
+      debugPrint('This is the uri: $uri');
+      final request = http.MultipartRequest('POST', uri)
+        ..headers['Authorization'] = 'Bearer $token'
+        ..fields['tenantId'] = tenantId
+        ..fields['description'] = _descriptionController.text
+        ..fields['priority'] = priorityLabel
+        ..fields['preferredDate'] = _dateController.text;
+      debugPrint('📝 Description: ${_descriptionController.text}');
+      debugPrint('📅 Date: ${_dateController.text}');
+      debugPrint('🔧 Priority: $priorityLabel');
+      debugPrint('🚚 Sending maintenance request ...$request');
+
+
+      if (_imageFile != null) {
+        debugPrint('Attaching image: ${_imageFile!.path}');
+        request.files.add(await http.MultipartFile.fromPath(
+          'image',
+          _imageFile!.path,
+          filename: path.basename(_imageFile!.path),
+        ));
+      }
+
+      debugPrint('Sending maintenance request ...');
+
+      final streamedResponse = await request.send();
+      final responseBody = await streamedResponse.stream.bytesToString();
+
+      debugPrint('Streamed response ${streamedResponse.statusCode}');
+      debugPrint('Response Body $responseBody');
+
+      // if (streamedResponse.statusCode == 201) {
+      //   debugPrint('Maintenance request submitted successful');
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(content: Text('Request submitted successfully'))
+      //   );
+      //   Navigator.pop(context);
+      // } else {
+      //   debugPrint('Error response: $responseBody');
+      //   throw Exception('Failed to submit request');
+      // }
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Success'),
+          content: const Text('Maintenance request submitted successfully'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Ok'),
+            )
+          ],
+        ),
+      );
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      if (!mounted) return;
+      setState(() {
+        _descriptionController.clear();
+        _dateController.clear();
+        _imageFile = null;
+        _priorityValue = 0;
+      });
+
+    } catch (error, stackTrace) {
+      debugPrint('🔥 Exception occurred during submission: $error');
+      debugPrint(stackTrace.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving request: $error'))
+      );
+    }
+
+
   }
 
   @override
@@ -99,12 +174,11 @@ class _MaintenanceScreenState extends State<MaintenanceRequestScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              Text(
-                'Unit Number: $unitNumber',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text('Tenant: $tenantName'),
-              const SizedBox(height: 20),
+              // Text(
+              //   'Apartment Info (auto-filled from server',
+              //   style: const TextStyle(fontWeight: FontWeight.bold),
+              // ),
+              // const SizedBox(height: 20),
 
               TextFormField(
                 controller: _descriptionController,
@@ -180,6 +254,7 @@ class _MaintenanceScreenState extends State<MaintenanceRequestScreen> {
                   suffixIcon: Icon(Icons.calendar_today),
                 ),
                 onTap: _pickDate,
+                validator: (value) => value == null || value.isEmpty ? 'Please select a date' : null,
               ),
               const SizedBox(height: 20),
 
