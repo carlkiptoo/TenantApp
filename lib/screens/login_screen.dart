@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import '../theme/app_colors.dart';
 import 'home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'rent_status_screen.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,9 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  final String tenantEmail = 'tenant@tenant.com';
-  final String password = 'tenant';
 
   bool _isLoading = false;
 
@@ -37,24 +36,35 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     
     try {
-      final response = await http.post(Uri.parse('http://192.168.100.6:5000/api/auth/login'),
+      final baseUrl = dotenv.env['LOGIN_URL'];
+      if (baseUrl == null) {
+        throw Exception('Login Url not found in .env');
+      }
+
+      final uri = Uri.parse(baseUrl);
+
+      final response = await http.post(
+      uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
       );
 
+
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(data);
 
-        final tenantId = data['tenantId'];
-        print(tenantId);
+
+        final tenantId = data['tenantId']?.toString();
+        debugPrint(tenantId);
         if (tenantId == null ) {
           throw Exception('Tenant missing from server response');
         }
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
-        await prefs.setString('token', data['token']);
+        await prefs.setString('token', data['token']?.toString() ?? '');
         await prefs.setString('tenantId', tenantId);
         // await prefs.setString('tenantName', data['tenant']['name']);
 
@@ -67,19 +77,25 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else {
         final error = jsonDecode(response.body);
+
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${error}')),
+          SnackBar(content: Text('Error: ${error['message'] ?? error.toString()}')),
         );
       }
+    } on FormatException catch (e) {
+      debugPrint('Format error : $e');
+    } on http.ClientException catch (e) {
+      debugPrint('Network error: $e');
     } catch (e) {
-      print(e);
+      debugPrint('Other error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Something went wrong. Please try again later: ${e}')),
+        SnackBar(content: Text('Something went wrong. Please try again later: $e')),
       );
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = true;
+          _isLoading = false;
         });
       }
     }

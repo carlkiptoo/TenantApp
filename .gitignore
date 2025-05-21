@@ -81,3 +81,9 @@ app.*.map.json
 # Misc files that should be ignored
 *.bak
 *.swo
+
+
+# Environment & credentials
+.env
+*.env
+*.keystore
