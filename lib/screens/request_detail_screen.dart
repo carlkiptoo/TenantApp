@@ -17,7 +17,7 @@ class RequestDetailScreen extends StatelessWidget {
               'Issue Reported',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            Text(request['issue']),
+            Text(request['description']),
             const SizedBox(height: 16),
 
             const Text('Status', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -25,20 +25,20 @@ class RequestDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             const Text(
-              'Date Reported',
+              'Created at',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            Text(request['dateReported']),
+            Text(request['createdAt']),
 
-            const Text(
-              'Admin Notes',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            Text(
-              request['adminNotes']?.isNotEmpty == true
-                  ? request['adminNotes']
-                  : 'No notes from admin yet.',
-            ),
+            // const Text(
+            //   'Admin Notes',
+            //   style: TextStyle(fontWeight: FontWeight.bold),
+            // ),
+            // Text(
+            //   request['adminNotes']?.isNotEmpty == true
+            //       ? request['adminNotes']
+            //       : 'No notes from admin yet.',
+            // ),
             const SizedBox(height: 16),
 
             if (request['imagePath'] != null)
